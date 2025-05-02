@@ -1,5 +1,6 @@
 package fr.urouen.sync.model;
 
+import org.json.JSONObject;
 import java.io.*;
 import java.util.HashMap;
 import java.util.Map;
@@ -7,32 +8,39 @@ import java.util.Map;
 public class SyncRegistry {
     private final Map<String, String> conflictResolutions = new HashMap<>();
 
-    // Sauvegarde le registre de synchronisation dans un fichier
     public void saveToFile(File file) throws IOException {
-        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(file))) {
-            oos.writeObject(conflictResolutions);
+        JSONObject jsonObject = new JSONObject();
+        JSONObject resolutions = new JSONObject(conflictResolutions);
+        jsonObject.put("conflictResolutions", resolutions);
+        try (FileWriter writer = new FileWriter(file)) {
+            writer.write(jsonObject.toString(2));
         }
     }
 
-    // Charge le registre depuis un fichier
-    public void loadFromFile(File file) throws IOException, ClassNotFoundException {
+    public void loadFromFile(File file) throws IOException {
         if (file.exists()) {
-            try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(file))) {
-                Object obj = ois.readObject();
-                if (obj instanceof Map) {
-                    conflictResolutions.putAll((Map<String, String>) obj);
+            try (FileReader reader = new FileReader(file)) {
+                StringBuilder content = new StringBuilder();
+                int c;
+                while ((c = reader.read()) != -1) {
+                    content.append((char) c);
                 }
+                JSONObject jsonObject = new JSONObject(content.toString());
+                JSONObject resolutions = jsonObject.getJSONObject("conflictResolutions");
+                for (String key : resolutions.keySet()) {
+                    conflictResolutions.put(key, resolutions.getString(key));
+                }
+            } catch (Exception e) {
+                throw new IOException("Malformed JSON in registry file", e);
             }
         }
     }
 
-    // Ajoute une résolution de conflit au registre
     public void addConflictResolution(String relativePath, String resolution) {
         conflictResolutions.put(relativePath, resolution);
     }
 
-    // Récupère les résolutions de conflits
     public Map<String, String> getConflictResolutions() {
-        return conflictResolutions;
+        return new HashMap<>(conflictResolutions);
     }
 }

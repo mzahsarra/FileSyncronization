@@ -1,9 +1,8 @@
 package fr.urouen.sync.sync;
 
-import fr.urouen.sync.model.SyncRegistry;
 import fr.urouen.sync.profile.Profile;
 import fr.urouen.sync.profile.ProfileManager;
-
+import fr.urouen.sync.model.SyncRegistry;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
@@ -13,53 +12,26 @@ public class Sync {
     private final FileComparator comparator = new FileComparator();
     private final ConflictResolver resolver = new ConflictResolver();
 
-    // Synchronisation de deux répertoires
     public void synchronize(String profileName) throws IOException, ClassNotFoundException {
         Profile profile = ProfileManager.getInstance().loadProfile(profileName);
         SyncRegistry registry = new SyncRegistry();
         registry.loadFromFile(new File(profileName + ".sync"));
 
-        // Vérification des répertoires avant synchronisation
         File dirA = new File(profile.getPathA());
         File dirB = new File(profile.getPathB());
 
-        // Vérification si les répertoires existent, sinon les créer
-        if (!dirA.exists()) {
-            System.out.println("Le répertoire A n'existe pas. Création du répertoire A...");
-            dirA.mkdirs();  // Crée le répertoire A s'il n'existe pas
-        }
+        processDirectory(dirA, dirB, "", registry);
 
-        if (!dirB.exists()) {
-            System.out.println("Le répertoire B n'existe pas. Création du répertoire B...");
-            dirB.mkdirs();  // Crée le répertoire B s'il n'existe pas
-        }
-
-        // Procéder à la synchronisation après avoir vérifié ou créé les répertoires
-        processDirectory(
-                dirA,
-                dirB,
-                "",
-                registry
-        );
-
-        registry.saveToFile(new File(profileName + ".sync"));
-        System.out.println("Synchronisation terminée avec succès");
+        ProfileManager.getInstance().saveProfileToFile(profile, registry);
     }
 
-    // Traite les répertoires en comparant les fichiers et en les synchronisant
     private void processDirectory(File dirA, File dirB, String relativePath, SyncRegistry registry) throws IOException {
-        if (!dirA.exists() || !dirB.exists()) {
-            System.out.println("L'un des répertoires n'existe pas.");
-            return;
-        }
-
         File[] filesA = dirA.listFiles();
         File[] filesB = dirB.listFiles();
 
         Map<String, File> filesAMap = createFileMap(filesA);
         Map<String, File> filesBMap = createFileMap(filesB);
 
-        // Comparer les fichiers entre les deux répertoires
         for (String fileName : filesAMap.keySet()) {
             File fileA = filesAMap.get(fileName);
             File fileB = filesBMap.get(fileName);
@@ -71,7 +43,6 @@ public class Sync {
             }
         }
 
-        // Copier les fichiers présents seulement dans B
         for (String fileName : filesBMap.keySet()) {
             if (!filesAMap.containsKey(fileName)) {
                 File fileB = filesBMap.get(fileName);
@@ -79,7 +50,21 @@ public class Sync {
             }
         }
 
-        // Traiter récursivement les sous-répertoires
+        // Gestion des fichiers supprimés
+        for (String fileName : filesAMap.keySet()) {
+            if (!filesBMap.containsKey(fileName)) {
+                File fileA = filesAMap.get(fileName);
+                deleteFile(fileA, new File(dirB, fileA.getName()));
+            }
+        }
+
+        for (String fileName : filesBMap.keySet()) {
+            if (!filesAMap.containsKey(fileName)) {
+                File fileB = filesBMap.get(fileName);
+                deleteFile(fileB, new File(dirA, fileB.getName()));
+            }
+        }
+
         for (String fileName : filesAMap.keySet()) {
             File fileA = filesAMap.get(fileName);
             File fileB = filesBMap.get(fileName);
@@ -90,28 +75,37 @@ public class Sync {
         }
     }
 
-    // Compare deux fichiers et résout les conflits si nécessaire
     private void compareFiles(File fileA, File fileB, String relativePath, SyncRegistry registry) throws IOException {
         int comparisonResult = comparator.compare(fileA, fileB, System.currentTimeMillis());
 
-        if (comparisonResult == FileComparator.EQUAL) {
-            return;  // Les fichiers sont égaux
-        }
+        if (comparisonResult == FileComparator.CONFLICT) {
+            String resolution = resolver.resolve(fileA, fileB);
+            registry.addConflictResolution(relativePath, resolution);
 
-        if (comparisonResult == FileComparator.A_NEWER) {
+            Profile profile = ProfileManager.getInstance().loadProfile(relativePath);
+            ProfileManager.getInstance().saveProfileToFile(profile, registry);
+        } else if (comparisonResult == FileComparator.A_NEWER) {
             copyFile(fileA, fileB);
         } else if (comparisonResult == FileComparator.B_NEWER) {
             copyFile(fileB, fileA);
-        } else if (comparisonResult == FileComparator.CONFLICT) {
-            if (resolver.resolve(fileA, fileB)) {
-                copyFile(fileA, fileB);  // Conflit résolu en gardant la version A
+        }
+    }
+
+    private void copyFile(File source, File dest) throws IOException {
+        Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
+        System.out.println("Fichier copié : " + source.getPath() + " -> " + dest.getPath());
+    }
+
+    private void deleteFile(File source, File dest) {
+        if (dest.exists()) {
+            if (dest.delete()) {
+                System.out.println("Fichier supprimé : " + dest.getPath());
             } else {
-                copyFile(fileB, fileA);  // Conflit résolu en gardant la version B
+                System.err.println("Erreur de suppression du fichier : " + dest.getPath());
             }
         }
     }
 
-    // Créer une carte des fichiers à partir d'un tableau de fichiers
     private Map<String, File> createFileMap(File[] files) {
         Map<String, File> fileMap = new java.util.HashMap<>();
         for (File file : files) {
@@ -120,11 +114,5 @@ public class Sync {
             }
         }
         return fileMap;
-    }
-
-    // Copier un fichier d'un répertoire à un autre
-    private void copyFile(File source, File dest) throws IOException {
-        Files.copy(source.toPath(), dest.toPath(), StandardCopyOption.REPLACE_EXISTING);
-        System.out.println("Fichier copié : " + source.getPath() + " -> " + dest.getPath());
     }
 }

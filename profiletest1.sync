@@ -1,0 +1,9 @@
+{
+  "profile": {
+    "registry": {},
+    "pathA": "D:/A",
+    "pathB": "D:/B",
+    "name": "profiletest1"
+  },
+  "conflictResolutions": {}
+}

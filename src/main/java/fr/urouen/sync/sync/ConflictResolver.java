@@ -4,10 +4,11 @@ import java.io.File;
 import java.util.Scanner;
 
 public class ConflictResolver {
+
     private Scanner scanner = new Scanner(System.in);
 
-    // Résoudre un conflit entre deux fichiers
-    public boolean resolve(File fileA, File fileB) {
+    // Méthode de résolution des conflits
+    public String resolve(File fileA, File fileB) {
         System.out.println("\nCONFLIT: " + fileA.getName());
         System.out.println("A: " + fileA.lastModified() + " (" + fileA.length() + " bytes)");
         System.out.println("B: " + fileB.lastModified() + " (" + fileB.length() + " bytes)");
@@ -20,9 +21,11 @@ public class ConflictResolver {
         int choice = scanner.nextInt();
 
         if (choice == 3) {
-            return fileA.lastModified() > fileB.lastModified();  // Conserver la version la plus récente
+            // Conserver la version la plus récente
+            return fileA.lastModified() > fileB.lastModified() ? "Version A" : "Version B";
         }
 
-        return choice == 1;  // Retourne true si l'utilisateur choisit la version A
+        // Retourne la version choisie
+        return choice == 1 ? "Version A" : "Version B";
     }
 }

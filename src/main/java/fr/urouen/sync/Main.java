@@ -10,7 +10,7 @@ public class Main {
     public static void main(String[] args) {
         try {
             // Nom du profil à tester
-            String profileName = "Profile1";
+            String profileName = "profiletest";
 
             // Récupérer l'instance de ProfileManager
             ProfileManager pm = ProfileManager.getInstance();
@@ -25,8 +25,8 @@ public class Main {
             // Créer un nouveau profil avec le builder
             new ProfileBuilder()
                     .setProfileName(profileName)
-                    .setPathA("D:/SarraDesktop/archi logicielle/A")
-                    .setPathB("D:/SarraDesktop/archi logicielle/B")
+                    .setPathA("D:/A")
+                    .setPathB("D:/B")
                     .build();
 
             System.out.println("Nouveau profil créé avec succès");
@@ -45,3 +45,4 @@ public class Main {
         }
     }
 }
+
