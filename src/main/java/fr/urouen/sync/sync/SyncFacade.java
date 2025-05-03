@@ -1,30 +1,36 @@
 package fr.urouen.sync.sync;
 
-import fr.urouen.sync.profile.ProfileFactory;
+import fr.urouen.sync.exception.SyncException;
 import fr.urouen.sync.profile.ProfileManager;
-
-import java.io.File;
 import java.io.IOException;
 
+/**
+ * Provides a simplified interface to the synchronization subsystem, implementing the Facade pattern.
+ */
 public class SyncFacade {
     private final Sync sync;
 
+    /**
+     * Constructs a new SyncFacade.
+     */
     public SyncFacade() {
         this.sync = new Sync();
     }
 
-    public void createProfile(String profileName, String pathA, String pathB) throws IOException {
-        ProfileFactory.createProfile(profileName, pathA, pathB);
-    }
-
-    public void synchronize(String profileName) throws IOException, ClassNotFoundException {
+    /**
+     * Synchronizes the directories specified in the given profile.
+     * @param profileName the name of the profile to synchronize
+     * @throws SyncException if an error occurs during synchronization
+     */
+    public void synchronize(String profileName) throws SyncException {
         sync.synchronize(profileName);
     }
 
-    public boolean profileExists(String profileName) {
-        return new File(profileName + ".sync").exists();
-    }
-
+    /**
+     * Deletes the specified profile.
+     * @param profileName the name of the profile to delete
+     * @throws IOException if the profile cannot be deleted
+     */
     public void deleteProfile(String profileName) throws IOException {
         ProfileManager.getInstance().deleteProfile(profileName);
     }

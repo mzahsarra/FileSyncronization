@@ -1,9 +1,15 @@
 package fr.urouen.sync.cli;
 
+import fr.urouen.sync.profile.ProfileBuilder;
 
-import fr.urouen.sync.profile.ProfileManager;
-
+/**
+ * Command-line program to create a new synchronization profile.
+ */
 public class NewProfile {
+    /**
+     * Creates a new profile with the specified name and directory paths.
+     * @param args command-line arguments: <name> <pathA> <pathB>
+     */
     public static void main(String[] args) {
         if (args.length != 3) {
             System.err.println("Usage: new-profile <nom> <cheminA> <cheminB>");
@@ -11,8 +17,11 @@ public class NewProfile {
         }
 
         try {
-            ProfileManager.getInstance()
-                    .createProfile(args[0], args[1], args[2]);
+            new ProfileBuilder()
+                    .setProfileName(args[0])
+                    .setPathA(args[1])
+                    .setPathB(args[2])
+                    .build();
             System.out.println("Profil créé avec succès");
         } catch (Exception e) {
             System.err.println("Erreur: " + e.getMessage());

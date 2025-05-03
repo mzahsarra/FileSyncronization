@@ -49,7 +49,7 @@
                 <configuration>
                     <archive>
                         <manifest>
-                            <mainClass>fr.urouen.sync.Main</mainClass>
+                            <mainClass>fr.urouen.sync.cli.SyncMain</mainClass>
                         </manifest>
                     </archive>
                     <descriptorRefs>

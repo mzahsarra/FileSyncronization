@@ -1,0 +1,9 @@
+{
+  "profile": {
+    "pathA": "D:/A",
+    "pathB": "D:/B",
+    "name": "profiletest"
+  },
+  "lastModified": {"jj1.txt": 1746277953379},
+  "conflictResolutions": {"jj1.txt": "Version A"}
+}
