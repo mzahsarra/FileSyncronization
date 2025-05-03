@@ -10,10 +10,11 @@ public class SyncMain {
         }
 
         try {
-            new Sync().synchronize(args[0]);
-            System.out.println("Synchronisation terminée");
+            Sync sync = new Sync();
+            sync.synchronize(args[0]);
         } catch (Exception e) {
             System.err.println("Erreur: " + e.getMessage());
+            e.printStackTrace();
             System.exit(1);
         }
     }

@@ -6,18 +6,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SyncRegistry {
+    private final Map<String, Long> lastModified = new HashMap<>();
     private final Map<String, String> conflictResolutions = new HashMap<>();
 
-    public void saveToFile(File file) throws IOException {
-        JSONObject jsonObject = new JSONObject();
-        JSONObject resolutions = new JSONObject(conflictResolutions);
-        jsonObject.put("conflictResolutions", resolutions);
-        try (FileWriter writer = new FileWriter(file)) {
-            writer.write(jsonObject.toString(2));
-        }
-    }
-
     public void loadFromFile(File file) throws IOException {
+        lastModified.clear();
+        conflictResolutions.clear();
         if (file.exists()) {
             try (FileReader reader = new FileReader(file)) {
                 StringBuilder content = new StringBuilder();
@@ -26,14 +20,35 @@ public class SyncRegistry {
                     content.append((char) c);
                 }
                 JSONObject jsonObject = new JSONObject(content.toString());
-                JSONObject resolutions = jsonObject.getJSONObject("conflictResolutions");
-                for (String key : resolutions.keySet()) {
-                    conflictResolutions.put(key, resolutions.getString(key));
+                JSONObject lastMod = jsonObject.optJSONObject("lastModified");
+                if (lastMod != null) {
+                    for (String key : lastMod.keySet()) {
+                        lastModified.put(key, lastMod.getLong(key));
+                    }
+                }
+                JSONObject resolutions = jsonObject.optJSONObject("conflictResolutions");
+                if (resolutions != null) {
+                    for (String key : resolutions.keySet()) {
+                        conflictResolutions.put(key, resolutions.getString(key));
+                    }
                 }
             } catch (Exception e) {
                 throw new IOException("Malformed JSON in registry file", e);
             }
         }
+    }
+
+    public void addLastModified(String relativePath, long timestamp) {
+        lastModified.put(relativePath, timestamp);
+    }
+
+    public Long getLastSync(String relativePath) {
+        return lastModified.get(relativePath);
+    }
+
+    public void removeEntry(String relativePath) {
+        lastModified.remove(relativePath);
+        conflictResolutions.remove(relativePath);
     }
 
     public void addConflictResolution(String relativePath, String resolution) {
@@ -42,5 +57,9 @@ public class SyncRegistry {
 
     public Map<String, String> getConflictResolutions() {
         return new HashMap<>(conflictResolutions);
+    }
+
+    public Map<String, Long> getLastModified() {
+        return new HashMap<>(lastModified);
     }
 }
