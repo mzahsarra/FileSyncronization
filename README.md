@@ -27,6 +27,7 @@ Main class fr.urouen.sync.cli.SyncMain
 Enregistrez et exécutez.
 
 Etape 4 : même configuration pour Synostat que SyncMain
+
 JSync/
 ├── src/
 │   └── fr/urouen/sync/
