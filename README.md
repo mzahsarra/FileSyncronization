@@ -1,4 +1,8 @@
 JSync - Outil de Synchronisation de Fichiers:
+Prérequis
+Java : JDK (testé avec OpenJDK 21).
+Bibliothèque JSON : json-20231013.jar (téléchargeable sur Maven Central).
+
 Utilisation:
 Étape 1 : Créer les répertoires à synchroniser
 
